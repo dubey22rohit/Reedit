@@ -8,19 +8,26 @@ import { ApolloServer } from "apollo-server-express";
 import { buildSchema } from "type-graphql";
 import { HelloResolver } from "./resolvers/hello";
 import { PostResolver } from "./resolvers/post";
+import { ApolloServerPluginLandingPageGraphQLPlayground } from "apollo-server-core/dist/plugin/landingPage/graphqlPlayground";
+import { UserResolver } from "./resolvers/user";
 
 const main = async () => {
   const orm = await MikroORM.init(mikroOrmConfig);
-  await orm.getMigrator().up();
+  await orm.getMigrator().up(); //Will run the migration
 
   const app = express();
 
   const apolloServer = new ApolloServer({
     schema: await buildSchema({
-      resolvers: [HelloResolver, PostResolver],
+      resolvers: [HelloResolver, PostResolver, UserResolver],
       validate: false,
     }),
     context: () => ({ em: orm.em }), //context is accessible by our resolvers
+    plugins: [
+      ApolloServerPluginLandingPageGraphQLPlayground({
+        // options
+      }),
+    ],
   });
   await apolloServer.start();
   apolloServer.applyMiddleware({ app });
