@@ -5,7 +5,7 @@ import { Field, ObjectType } from "type-graphql";
 @Entity() //For our DB
 export class User {
   @Field() //For GQL
-  @PrimaryKey() //For DB
+  @PrimaryKey() //For Mikro-ORM
   id!: number;
 
   @Field(() => String)

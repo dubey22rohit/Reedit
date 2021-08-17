@@ -1,6 +1,6 @@
 import { User } from "../entities/Users";
-import { MyContext } from "src/types";
-import { Arg, Ctx, Field, InputType, Mutation, ObjectType, Resolver } from "type-graphql";
+import { CustomSessionData, MyContext } from "src/types";
+import { Arg, Ctx, Field, InputType, Mutation, ObjectType, Query, Resolver } from "type-graphql";
 
 import argon2 from "argon2";
 
@@ -33,10 +33,23 @@ class UserResponse {
 
 @Resolver()
 export class UserResolver {
+  //ME Query
+  @Query(() => User, { nullable: true })
+  async me(@Ctx() { em, req }: MyContext) {
+    let sess = req.session as CustomSessionData;
+    console.log('SESSION : ',sess)
+    if (!sess.userId) {
+      return null;
+    }
+    const user = await em.findOne(User, { id: sess.userId });
+    return user;
+  }
+
+  //Register Mutation
   @Mutation(() => UserResponse)
   async register(
     @Arg("options", () => UsernamePasswordInput) options: UsernamePasswordInput,
-    @Ctx() { em }: MyContext
+    @Ctx() { em, req }: MyContext
   ): Promise<UserResponse> {
     if (options.username.length <= 3) {
       return {
@@ -74,13 +87,19 @@ export class UserResolver {
         };
       }
     }
+
+    //Setting the user cookie while registering so that a user is logged in as well after registering
+    let sess = req.session as CustomSessionData;
+    sess.userId = user.id;
+
     return { user };
   }
 
+  //Login mutation
   @Mutation(() => UserResponse)
   async login(
     @Arg("options", () => UsernamePasswordInput) options: UsernamePasswordInput,
-    @Ctx() { em }: MyContext
+    @Ctx() { em, req }: MyContext
   ): Promise<UserResponse> {
     const user = await em.findOne(User, { username: options.username });
     if (!user) {
@@ -99,7 +118,9 @@ export class UserResolver {
         ],
       };
     }
-
+    let sess = req.session as CustomSessionData;
+    sess.userId = user.id;
+    // sess.anyRandomThing = 'Anything'; We can add anything to our session object
     return { user };
   }
 }

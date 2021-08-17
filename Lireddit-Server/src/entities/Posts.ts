@@ -4,8 +4,8 @@ import { Field, ObjectType } from "type-graphql";
 @ObjectType()
 @Entity()
 export class Post {
-  @Field()
-  @PrimaryKey()
+  @Field()//For Apollo
+  @PrimaryKey()//For mikro-orm
   id!: number;
 
   @Field(() => String)
